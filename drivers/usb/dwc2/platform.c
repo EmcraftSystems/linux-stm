@@ -467,6 +467,22 @@ static int dwc2_driver_probe(struct platform_device *dev)
 	retval = dwc2_lowlevel_hw_init(hsotg);
 	if (retval)
 		return retval;
+printk("!!! sasha: %s(): line %d: HACK!\n", __FUNCTION__, __LINE__);
+#if 1
+	// __HAL_RCC_USB_CONFIG(RCC_USBCLKSOURCE_PLL3);
+	// MODIFY_REG(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL, (uint32_t)(RCC_USBCLKSOURCE_PLL3));
+	*(volatile int*)0x58024454 &= ~0x00300000;
+	*(volatile int*)0x58024454 |= 0x00200000;
+
+	// SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSEN);
+	*(volatile int*)0x580244d8 |= 0x08000000;
+
+	// USBx->GUSBCFG |= USB_OTG_GUSBCFG_PHYSEL;
+	*(volatile int*)0x4008000C |= 0x40;
+
+	// SET_BIT (PWR->CR3, PWR_CR3_USB33DEN);
+	*(volatile int*)0x5802480c |= 0x01000000;
+#endif
 
 	spin_lock_init(&hsotg->lock);
 
