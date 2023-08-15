@@ -4360,10 +4360,12 @@ void warn_alloc(gfp_t gfp_mask, nodemask_t *nodemask, const char *fmt, ...)
 			nodemask_pr_args(nodemask));
 	va_end(args);
 
+#ifdef CONFIG_MMU
 	cpuset_print_current_mems_allowed();
 	pr_cont("\n");
 	dump_stack();
 	warn_alloc_show_mem(gfp_mask, nodemask);
+#endif
 }
 
 static inline struct page *
