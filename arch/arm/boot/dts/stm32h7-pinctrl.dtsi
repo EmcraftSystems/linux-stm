@@ -271,5 +271,16 @@
 			slew-rate = <2>;
 		};
 	};
+
+	usbotg_fs_pins_a: usbotg-fs-0 {
+		pins {
+			pinmux = <STM32_PINMUX('A', 10, AF10)>, /* OTG_FS_ID */
+				 <STM32_PINMUX('A', 11, AF10)>, /* OTG_FS_DM */
+				 <STM32_PINMUX('A', 12, AF10)>; /* OTG_FS_DP */
+			bias-disable;
+			drive-push-pull;
+			slew-rate = <2>;
+		};
+	};
 };
 

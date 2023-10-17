@@ -54,6 +54,21 @@
 #include "hcd.h"
 #include "debug.h"
 
+#ifdef CONFIG_MACH_STM32H743
+#define PWR_BASE 	0x58024800
+#define REG_PWR_CR3 	0x0C
+#define CR3_USB33DEN 	BIT(24)
+
+#define RCC_BASE 		0x58024400
+#define REG_RCC_D2CCIP2R 	0x54
+#define USB_CLK_MASK		GENMASK(21, 20)
+#define USB_CLK_PLL3 		BIT(21)
+#define USB_CLK_PLL1 		BIT(20)
+
+#define REG_RCC_AHB1ENR 	0xD8
+#define AHB1ENR_USB2OTGHSEN	BIT(27)
+#endif
+
 static const char dwc2_driver_name[] = "dwc2";
 
 /*
@@ -439,6 +454,11 @@ static int dwc2_driver_probe(struct platform_device *dev)
 	struct dwc2_hsotg *hsotg;
 	struct resource *res;
 	int retval;
+#ifdef CONFIG_MACH_STM32H743
+	const char *compat;
+	struct device_node *np;
+	uint32_t reg;
+#endif
 
 	hsotg = devm_kzalloc(&dev->dev, sizeof(*hsotg), GFP_KERNEL);
 	if (!hsotg)
@@ -467,6 +487,37 @@ static int dwc2_driver_probe(struct platform_device *dev)
 	retval = dwc2_lowlevel_hw_init(hsotg);
 	if (retval)
 		return retval;
+
+	/* Additional initialization of the USB FS clock and PHY on STM32H7 */
+#ifdef CONFIG_MACH_STM32H743
+	np = of_find_node_by_path("/");
+	if (np) {
+		if (!of_property_read_string(np, "compatible", &compat) &&
+		    strstr(compat, "st,stm32h7")) {
+			/* Select PLL3 as a clock source for USB2OTG */
+			reg = readl_relaxed(RCC_BASE + REG_RCC_D2CCIP2R);
+			reg &= ~USB_CLK_MASK;
+			reg |= USB_CLK_PLL3;
+			writel_relaxed(reg, RCC_BASE + REG_RCC_D2CCIP2R);
+
+			/* Enable USB2OTG peripheral clocks */
+			reg = readl_relaxed(RCC_BASE + REG_RCC_AHB1ENR);
+			reg |= AHB1ENR_USB2OTGHSEN;
+			writel_relaxed(reg, RCC_BASE + REG_RCC_AHB1ENR);
+
+			/* Select FS PHY for USB2OTG */
+			reg = dwc2_readl(hsotg, GUSBCFG);
+			reg |= GUSBCFG_PHYSEL;
+			dwc2_writel(hsotg, reg, GUSBCFG);
+
+			/* Enable VDD33USB voltage level detector */
+			reg = readl_relaxed(PWR_BASE + REG_PWR_CR3);
+			reg |= CR3_USB33DEN;
+			writel_relaxed(reg, PWR_BASE + REG_PWR_CR3);
+		}
+		of_node_put(np);
+	}
+#endif
 
 	spin_lock_init(&hsotg->lock);
 
