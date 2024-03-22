@@ -58,4 +58,32 @@ config MACH_STM32MP13
 
 endif # ARMv7-A
 
+config STM32H7_POWER_MODES
+	bool "Support power modes for STM32H7"
+	depends on MACH_STM32H743 && PM
+
+if STM32H7_POWER_MODES
+
+config STM32H7_STOP_MODE
+	bool "Stop power mode for STM32H7"
+	select PM_LPM_CODE_IN_TCM
+	depends on MACH_STM32H743 && PM
+	help
+	  Support deepsleep mode on STM32H7 targets
+
+config PM_LPM_CODE_IN_TCM
+	bool
+
+config ITCM_BASE
+	hex 'ITCM Base Address'
+	depends on PM_LPM_CODE_IN_TCM
+	default 0x00000000
+
+config DTCM_BASE
+	hex 'DTCM Base Address'
+	depends on PM_LPM_CODE_IN_TCM
+	default 0x20000000
+
+endif
+
 endif
