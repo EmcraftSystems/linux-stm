@@ -531,6 +531,12 @@ static int stm32mcu_suspend(struct stm32_dwmac *dwmac)
 	return 0;
 }
 
+static void stm32mcu_resume(struct stm32_dwmac *dwmac)
+{
+	clk_prepare_enable(dwmac->clk_tx);
+	clk_prepare_enable(dwmac->clk_rx);
+}
+
 #ifdef CONFIG_PM_SLEEP
 static int stm32_dwmac_suspend(struct device *dev)
 {
@@ -574,6 +580,7 @@ static SIMPLE_DEV_PM_OPS(stm32_dwmac_pm_ops,
 static struct stm32_ops stm32mcu_dwmac_data = {
 	.set_mode = stm32mcu_set_mode,
 	.suspend = stm32mcu_suspend,
+	.resume = stm32mcu_resume,
 };
 
 static struct stm32_ops stm32mp1_dwmac_data = {
