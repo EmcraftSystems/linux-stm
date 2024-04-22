@@ -151,6 +151,14 @@
 			clocks = <&rcc UART4_CK>;
 		};
 
+		usart6: serial@40011400 {
+			compatible = "st,stm32h7-uart";
+			reg = <0x40011400 0x400>;
+			interrupts = <71>;
+			status = "disabled";
+			clocks = <&rcc USART6_CK>;
+		};
+
 		i2c1: i2c@40005400 {
 			compatible = "st,stm32f7-i2c";
 			#address-cells = <1>;
